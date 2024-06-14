@@ -16,6 +16,7 @@ vn %>%
   count(syntaxoncode, wetenschappelijk_syntaxonnaam, nederlandse_syntaxonnaam,
         name = "aantal_soorten")
 
+# bron = https://www.verspreidingsatlas.nl/soortenlijst/vaatplanten
 standaardlijst_nl <- readr::read_csv2(
   file.path("data/soortenlijst-14-06-2024-14-09-25.csv")
 ) %>%
