@@ -22,7 +22,19 @@ standaardlijst_nl <- readr::read_csv2(
 ) %>%
   janitor::clean_names()
 
+# bron = export uit turboveg
+floralijst_nl_turboveg <- read_excel(
+  file.path("data", "floralijst_nederland.xlsx")
+) %>%
+  janitor::clean_names()
 
+floralijst_nl_turboveg_unieke <- floralijst_nl_turboveg %>%
+  filter(!is.na(lettercode),
+         !(is.na(nativename) & lettercode == "RANU-SP"))
+
+
+# test koppeling met standaardlijst
+###################################
 vn_soortnummers <- vn %>%
   distinct(soortnummer)
 
@@ -36,6 +48,25 @@ readr::write_csv2(
   vn_soortnummers_zonder_match,
   file.path("data", "vn_soortnummers_zonder_match.csv")
   )
+
+
+# test koppeling met floralijst van turboveg
+############################################
+vn_soorten_turboveg <- vn_soortnummers %>%
+  inner_join(
+    floralijst_nl_turboveg_unieke,
+    by = join_by(soortnummer == species_nr))
+
+vn_soortnummers_zonder_match_turboveg <- vn_soortnummers %>%
+  anti_join(
+    floralijst_nl_turboveg_unieke,
+    by = join_by(soortnummer == species_nr))
+
+readr::write_csv2(
+  vn_soortnummers_zonder_match_turboveg,
+  file.path("data", "vn_soortnummers_zonder_match_turboveg.csv")
+)
+
 
 
 
