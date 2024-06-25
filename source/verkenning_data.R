@@ -1,13 +1,14 @@
 library(readxl)
 library(dplyr)
 
-vn_path <- file.path("data", "VegetatieVanNederland.xlsx")
+vn_path <- file.path("data", "q_synoptische_tabellen_2005.xlsx")
 vn_sheets <- readxl::excel_sheets(vn_path)
 
 vn_sheets
 
 vn <- read_excel(
-  vn_path
+  vn_path,
+  sheet = vn_sheets
 ) %>%
   janitor::clean_names()
 
@@ -15,6 +16,17 @@ vn <- read_excel(
 vn %>%
   count(syntaxoncode, wetenschappelijk_syntaxonnaam, nederlandse_syntaxonnaam,
         name = "aantal_soorten")
+
+vn_soorten <- vn %>%
+  distinct(soortnummer, soortnaam)
+
+any(is.na(vn_soorten)) #OK
+
+# de soortnamen bevatten niet de auteursnaam, maar wellicht kunnen we hiermee
+# wel verder. Bv via koppeling met de GBIF taxonomic backbone.
+
+# onderstaande code niet meer nodig omdat nieuwe excel tabel de soortnamen bevat
+################################################################################
 
 # bron = https://www.verspreidingsatlas.nl/soortenlijst/vaatplanten
 standaardlijst_nl <- readr::read_csv2(
