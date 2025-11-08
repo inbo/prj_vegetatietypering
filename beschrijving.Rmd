@@ -1,0 +1,141 @@
+---
+title: "beschrijving inbovegtypering"
+output: html_document
+---
+
+# Doelstelling
+
+Een R pakket dat de vertaling maakt van de paper *Van Tongeren 2008* om vegetaties te classificeren in Vlaanderen.
+
+Het is de bedoeling dat de nieuwe voorgestelde compositie index, alsook alle subindices en andere indices waarvan sprake in de paper berekend kunnen worden op basis van vegetatieopnames, een soortenlijst en een synoptische tabel die de omzettingen bevat om de indices te kunnen berekenen.
+
+Het pakket wordt gehost en onderhouden op github in de repository *inbo/inbovegtypering*.
+
+# Workflow gebruiker
+
+1. Maak een connectie met de databanken
+2. Haal vegetatieopname op of creëer zelf een dataset
+3. Classificeer de vegatieopname en bewaar dit in een R object
+    - met een gekozen soortenlijst (path naar tekstfile of uit een databank of meegleverd met pakket als tekstfile)
+    - met een gekozen synoptische tabel (path naar tabel of meegeleverd met pakket als tekstfile)
+    - een zelfgekozen methode (Composite, likelihood, weirdness, incompleteness, cod, euclidean, ...) 
+    zoals beschreven in de paper *Van Tongeren 2008* 
+4. Print het classificatieobject
+5. Toon een samenvatting van het classificatieobject
+    - keuze welke matches je wil tonen: standaard de beste 12, maar ook een vector van types kan meegegeven worden
+    - keuze van volgorde van matches: van hoog naar laag, alfabetisch, zelfgekozen volgorde
+    - de gekozen classificatiemethode moet getoond worden
+6. Visualiseer de classificatie met een classificatieroos
+    - keuze hoeveel getoond moeten worden van best naar slechtst
+    - keuze welke matches je wil tonen: standaard de beste 12, maar ook een vector van types kan meegegeven worden
+    - keuze van volgorde van matches: van hoog naar laag, alfabetisch, zelfgekozen volgorde
+7. Bewaar het object, de summary  en de classificatieroos in externe bestanden (tekst, png)
+
+# Data
+
+## Vegetatieopnames
+
+### Waar te vinden
+
+1. Inboveg
+
+De vegetatieopnames worden standaard gehaald uit de inbo-databank *inboveg*.
+Er kunnen 1 of meerdere opnames opgehaald worden.
+
+Voorbeeldcode:
+
+```
+library(inbodb)
+conn <- connect_db_inboveg()
+records <-
+  inbodb::get_inboveg_recording(con_inboveg,
+                                survey_name = survey,
+                                recording_givid = code,
+                                collect = TRUE)
+```
+
+2. Manueel
+
+Er dient een dataset aangemaakt worden met de velden zoals beschreven in de structuur.
+
+
+### Structuur dataset
+
+data.frame of tibble met volgende kolommen:
+
+- RecordingGivid (chr): identificatie van de opname
+- LayerCode (chr): identificatie van de vegetatielaag
+- CoverCode (chr): bedekkingsgraad van de volledige vegetatielaag (meestal in percent)
+- ScientificName (chr): volledige wetenschappelijke naam van de plant in de vegetatieopname
+- PctValue (num): bedekking van de specifieke plant
+
+
+## Soortenlijst
+
+### Waar te vinden
+
+1. In INBO databank zoals FUTON
+
+```
+taxa <- tbl(con_taxa, "TaxonSourceTaxonGbifMatch")
+```
+
+2. manueel
+
+Een dataset met dezelfde structuur als beschreven in structuur
+
+### Structuur
+
+Een tibble met minstens volgende velden: 
+
+- TaxonName (chr): wetenschappelijke naam van de soort (om te linken met de opnames)
+- gbif_usageKey(chr): gbif ID
+- gbif_acceptedusageKey (chr): gbif accepted Id
+- species_number (int): soortnummer die overeenkomt met het soortnummer (species_number) in de synoptische tabel
+
+
+## Synoptische tabel
+
+### Waar te vinden
+
+1. Meegeleverd met het package
+
+Het pakket zal zelf de synoptische tabel meeleveren als een tekstbestand of binair bestand (file kan 10MB groot zijn als tekst)
+
+2. Manueel
+
+Een tibble met de structuur zoals hieronder beschreven
+
+### Structuur
+
+De synoptische tabel heeft volgende kolommen:
+
+- syntaxon_code (chr): de klasse waarin de vegetatie geklassificeerd wordt
+- species_number (int): soortnummer overeenkomstig de soortenlijst
+- frequency (double): frequentie van voorkomen zoals verwacht als percentage tussen 0 en 100
+- mean_if_present (double): frequentie van voorkomen indien aanwezig als percentage tussen 0 en 100
+
+
+# Plan van aanpak
+
+## objecten
+
+De classificatie zal gebeuren door gebruik te maken van S3 objecten, zodat de gewone print, summary en plotfuncties werken.
+Ik werk met 2 objecttypes. Voor beiden moet er een print, summary en plot functie geschreven worden. De plotfunctie zal een classificatieroos tonen, een alternatieve visualisatie kan een barplot zijn.
+
+- inbovegclassification: object waar de classificatieinformatie van een bepaalde vegetatieopname in terecht komt
+- inbovegclassification_list: lijst die meerdere inbovegclassification-objecten bevat
+
+
+## minimaal nodige functies
+
+- read_inboveg_recording: lees een vegetatieopname uit de inboveg databank
+- read_inboveg_specieslist: lees een soortenlijst uit de inboveg (futon- of soortenlijsten-databank)
+- classify_vegetation: classificeer 1 of meerdere opnames volgens een gekozen methode
+- summary.inbovegtypering en summary.inbovegtypering_list: tekstueel voorstellen van de output
+- plot.inbovegtypering en plot.inbovegrypering_list: visueel voorstellen van de output
+- classification_rose: de functie die de visualisatie afhandelt
+
+
+
+
